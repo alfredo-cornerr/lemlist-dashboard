@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum CreditType {
+  PURCHASE
+  USAGE_EXPORT
+  USAGE_SIGNAL
+  REFUND
+  BONUS
+}
+
+enum TargetType {
+  SINGLE_COMPANY
+  FILTER_SET
+}
+
+enum Frequency {
+  HOURLY
+  DAILY
+  WEEKLY
+}
+
+enum SignalType {
+  NEWS_EVENTS
+  JOB_OPENINGS
+  TECH_CHANGES
+  WEBSITE_CHANGES
+  CONNECTIONS
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  avatar        String?
+  credits       Int       @default(0)
+  plan          Plan      @default(FREE)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  exports       Export[]
+  monitors      Monitor[]
+  savedFilters  SavedFilter[]
+  creditLogs    CreditLog[]
+
+  @@map("users")
+}
+
+model CreditLog {
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  amount      Int
+  type        CreditType
+  description String
+  metadata    Json?      // Additional context
+  createdAt   DateTime   @default(now()) @map("created_at")
+  
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("credit_logs")
+}
+
+model Export {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  domain      String   // Company domain
+  companyName String?  @map("company_name")
+  data        Json     // Full company data snapshot
+  creditsUsed Int      @map("credits_used")
+  expiresAt   DateTime @map("expires_at") // 30 days from export
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, domain])
+  @@index([expiresAt])
+  @@map("exports")
+}
+
+model SavedFilter {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  filters     Json     // Filter configuration object
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_filters")
+}
+
+model Monitor {
+  id            String        @id @default(uuid())
+  userId        String        @map("user_id")
+  name          String
+  targetType    TargetType    @map("target_type")
+  targetConfig  Json          @map("target_config") // {domain: "stripe.com"} or filter object
+  
+  signals       SignalType[]  // Which signals to track
+  frequency     Frequency
+  
+  isActive      Boolean       @default(true) @map("is_active")
+  lastRunAt     DateTime?     @map("last_run_at")
+  nextRunAt     DateTime?     @map("next_run_at")
+  creditsPerRun Int           @map("credits_per_run")
+  
+  totalHits     Int           @default(0) @map("total_hits")
+  totalCreditsUsed Int        @default(0) @map("total_credits_used")
+  
+  signalHits    SignalHit[]
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([nextRunAt, isActive])
+  @@map("monitors")
+}
+
+model SignalHit {
+  id          String     @id @default(uuid())
+  monitorId   String     @map("monitor_id")
+  domain      String     // Company that triggered
+  companyName String?    @map("company_name")
+  signalType  SignalType @map("signal_type")
+  data        Json       // The new data detected
+  creditsUsed Int        @map("credits_used")
+  isRead      Boolean    @default(false) @map("is_read")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  
+  monitor     Monitor    @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId, createdAt])
+  @@index([createdAt])
+  @@map("signal_hits")
+}
+
+model CachedCompany {
+  id          String   @id @default(uuid())
+  domain      String   @unique
+  name        String?
+  data        Json     // Cached Predict Leads data
+  lastFetched DateTime @map("last_fetched")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("cached_companies")
+}

@@ -1,36 +1,230 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lemlist Client Portal
 
-## Getting Started
+A SaaS client portal for Lemlist users that provides a dashboard to view campaign data and analytics via the Lemlist API.
 
-First, run the development server:
+## Features
+
+### Client Features
+- 🔐 **Email/Password Authentication** via Supabase Auth
+- 🔑 **API Key Management** with connection testing
+- 📊 **Campaign Dashboard** with summary statistics
+- 📧 **Campaign Details** with leads and sequence overview
+- ⚙️ **Settings** to update or revoke API keys
+- 🎨 **Clean B2B SaaS UI** with Tailwind CSS and shadcn/ui
+
+### Admin Portal Features
+- 📈 **Admin Dashboard** - Overview stats (total users, active users, new signups)
+- 👥 **User Management** - View all users, their API key status, activity count
+- 📋 **Activity Logs** - Track user actions (login, API key changes, etc.)
+- 🗑️ **Delete Users** - Remove users from the platform
+- 🔒 **Admin-Only Access** - Protected routes for admin users
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Auth & Database**: Supabase
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Language**: TypeScript
+
+## Setup Instructions
+
+### 1. Clone and Install Dependencies
+
+```bash
+cd my-app
+npm install
+```
+
+### 2. Set up Supabase
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Copy your project URL and anon key from the project settings
+3. Get the service role key (keep this secret!)
+4. Run the database migrations in Supabase SQL Editor:
+   - `supabase/migrations/001_create_profiles.sql`
+   - `supabase/migrations/002_add_admin_and_logs.sql`
+
+### 3. Configure Environment Variables
+
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local` with your Supabase credentials:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 4. Make Yourself an Admin
+
+After signing up, run this SQL in Supabase to make yourself an admin:
+
+```sql
+UPDATE profiles SET is_admin = TRUE WHERE id = 'your-user-uuid';
+```
+
+Or check your user UUID in the Auth → Users section of Supabase.
+
+### 5. Run the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+my-app/
+├── app/
+│   ├── api/
+│   │   ├── activity/                 # Log user activity
+│   │   ├── admin/
+│   │   │   ├── activity/route.ts     # Get activity logs
+│   │   │   ├── stats/route.ts        # Get admin stats
+│   │   │   └── users/route.ts        # Manage users
+│   │   ├── lemlist/
+│   │   │   ├── campaigns/
+│   │   │   │   ├── route.ts          # List all campaigns
+│   │   │   │   └── [id]/route.ts     # Campaign details
+│   │   │   └── test/route.ts         # Test API key
+│   │   └── user/api-key/route.ts     # Manage user's API key
+│   ├── admin/                        # ADMIN PORTAL
+│   │   ├── layout.tsx                # Admin layout with sidebar
+│   │   ├── page.tsx                  # Admin dashboard
+│   │   ├── users/page.tsx            # Users management
+│   │   └── activity/page.tsx         # Activity logs
+│   ├── auth/
+│   │   ├── login/page.tsx            # Login form
+│   │   ├── signup/page.tsx           # Signup form
+│   │   └── callback/page.tsx         # OAuth callback
+│   ├── (dashboard)/
+│   │   ├── dashboard/page.tsx        # Main dashboard
+│   │   ├── campaigns/
+│   │   │   ├── page.tsx              # Campaigns list
+│   │   │   └── [id]/page.tsx         # Campaign detail
+│   │   ├── settings/page.tsx         # API key settings
+│   │   └── layout.tsx                # Dashboard layout
+│   ├── onboarding/page.tsx           # API key setup
+│   └── page.tsx                      # Root redirect
+├── components/
+│   ├── navigation.tsx                # Top nav bar with admin link
+│   └── ui/                           # shadcn/ui components
+├── lib/
+│   ├── admin.ts                      # Admin helper functions
+│   ├── lemlist.ts                    # Lemlist API client
+│   ├── supabase-client.ts            # Browser Supabase client
+│   └── supabase-server.ts            # Server Supabase client
+├── supabase/migrations/
+│   ├── 001_create_profiles.sql       # Database schema
+│   └── 002_add_admin_and_logs.sql    # Admin & activity logs
+├── middleware.ts                     # Auth protection
+└── README.md                         # Documentation
+```
 
-## Learn More
+## Database Schema
 
-To learn more about Next.js, take a look at the following resources:
+### profiles table
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | FK to auth.users |
+| lemlist_api_key | TEXT | User's Lemlist API key |
+| is_admin | BOOLEAN | Whether user is an admin |
+| created_at | TIMESTAMP | Creation time |
+| updated_at | TIMESTAMP | Last update time |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### activity_logs table
 
-## Deploy on Vercel
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | FK to auth.users |
+| action | TEXT | Action performed |
+| details | JSONB | Additional details |
+| created_at | TIMESTAMP | When action occurred |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Admin Portal Access
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Once you've made yourself an admin:
+
+1. **Admin Dashboard** (`/admin`):
+   - Total users count
+   - Active users (with API key configured)
+   - New signups today
+   - Quick links to manage users
+
+2. **Users Page** (`/admin/users`):
+   - View all registered users
+   - Search by email
+   - See API key status (Connected/No API Key)
+   - See activity count
+   - Delete users
+
+3. **Activity Logs** (`/admin/activity`):
+   - Last 100 user actions
+   - Filter by action type
+   - See user email and timestamp
+
+## API Routes
+
+### Client API
+
+- `GET /api/lemlist/campaigns` - List all campaigns
+- `GET /api/lemlist/campaigns/:id` - Get campaign details, stats, leads, and sequence
+- `POST /api/lemlist/test` - Test Lemlist API key
+- `GET /api/user/api-key` - Check if user has API key configured
+- `POST /api/user/api-key` - Save/update API key
+- `DELETE /api/user/api-key` - Revoke API key
+- `POST /api/activity` - Log user activity
+
+### Admin API
+
+- `GET /api/admin/stats` - Get admin dashboard stats
+- `GET /api/admin/users` - List all users
+- `PATCH /api/admin/users` - Update user admin status
+- `DELETE /api/admin/users` - Delete a user
+- `GET /api/admin/activity` - Get recent activity logs
+
+## User Flow
+
+### Regular User Flow
+
+1. **Sign up** → User creates account with email/password
+2. **Onboarding** → User pastes their Lemlist API key
+3. **Test Connection** → App validates the key with Lemlist API
+4. **Dashboard** → User sees all their campaigns with stats
+5. **Campaign Detail** → Click any campaign for leads, sequences, detailed stats
+6. **Settings** → User can update or revoke their API key anytime
+
+### Admin Flow
+
+1. **Sign up** → Same as regular user
+2. **Become Admin** → Run SQL to set `is_admin = TRUE`
+3. **Access Admin Portal** → "Admin" link appears in navigation
+4. **Monitor Users** → See who's signed up, who has API keys
+5. **Track Activity** → View user actions across the platform
+
+## Security Notes
+
+- API keys are stored in Supabase and retrieved server-side only
+- Row Level Security (RLS) policies ensure users can only access their own data
+- Admin routes are protected and check `is_admin` flag
+- Middleware protects authenticated routes
+- Service role key is only used server-side
+
+## Deployment
+
+Deploy to Vercel:
+
+```bash
+vercel --prod
+```
+
+Make sure to set all environment variables in your Vercel project settings.
