@@ -171,9 +171,17 @@ export default function DashboardPage() {
         { name: "Bounced", value: totals.bounced, color: COLORS[3] },
       ].filter(d => d.value > 0)
     }
+    const getValue = (c: typeof chartData[0]) => {
+      switch (metricFilter) {
+        case "opens": return c.opened
+        case "clicks": return c.clicked
+        case "replies": return c.replied
+        default: return c.opened
+      }
+    }
     return chartData.map((c, i) => ({
       name: c.name,
-      value: c[metricFilter],
+      value: getValue(c),
       color: COLORS[i % COLORS.length],
     })).filter(d => d.value > 0)
   }, [totals, chartData, metricFilter])
@@ -403,7 +411,7 @@ export default function DashboardPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={true}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                       outerRadius={120}
                       fill="#8884d8"
                       dataKey="value"
@@ -412,7 +420,7 @@ export default function DashboardPage() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => value.toLocaleString()} />
+                    <Tooltip formatter={(value) => (value as number).toLocaleString()} />
                     <Legend />
                   </RePieChart>
                 )}
