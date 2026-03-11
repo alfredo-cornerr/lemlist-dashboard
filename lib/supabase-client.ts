@@ -1,20 +1,30 @@
 "use client"
 
-import { createClient } from "@supabase/supabase-js"
+import { createBrowserClient } from "@supabase/ssr"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Get env vars safely
+const getSupabaseUrl = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!url) throw new Error("NEXT_PUBLIC_SUPABASE_URL is not defined")
+  return url
+}
 
-// Debug - log to console
+const getSupabaseKey = () => {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!key) throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined")
+  return key
+}
+
+// Debug
 if (typeof window !== 'undefined') {
-  console.log('Supabase URL:', supabaseUrl?.substring(0, 30) + '...')
-  console.log('Supabase Key exists:', !!supabaseAnonKey)
+  console.log('Supabase URL:', getSupabaseUrl())
+  console.log('Supabase Key exists:', !!getSupabaseKey())
 }
 
 // Browser client for client-side auth
-export const supabaseBrowserClient = createClient(
-  supabaseUrl,
-  supabaseAnonKey
+export const supabaseBrowserClient = createBrowserClient(
+  getSupabaseUrl(),
+  getSupabaseKey()
 )
 
 // Helper to get auth headers for API calls
