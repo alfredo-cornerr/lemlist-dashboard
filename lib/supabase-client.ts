@@ -2,14 +2,13 @@
 
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// HARDCODED - Works guaranteed
+const supabaseUrl = "https://uphgcpkjpsrdrdojgjwa.supabase.co"
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwaGdjcGtqcHNyZHJkb2pnandhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxOTYwMjgsImV4cCI6MjA1NDc3MjAyOH0.EiaRi5E1-tUj9JY54yJ4L-NNfQmLlaFGeF4jU7hL9xM"
 
-// Debug - show FULL URL
+// Debug
 if (typeof window !== 'undefined') {
-  console.log('FULL Supabase URL:', supabaseUrl)
-  console.log('URL Length:', supabaseUrl?.length)
-  console.log('Last 10 chars:', supabaseUrl?.slice(-10))
+  console.log('Supabase URL:', supabaseUrl)
 }
 
 // Browser client for client-side auth
@@ -25,4 +24,3 @@ export async function getAuthHeaders() {
     Authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
   }
 }
-// Build timestamp: Wed Mar 11 23:58:55 CET 2026
