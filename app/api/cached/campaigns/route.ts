@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY } from "@/lib/supabase-config"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl = SUPABASE_URL
+const supabaseServiceKey = SUPABASE_SERVICE_KEY
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
     
     const token = authHeader.substring(7)
-    const supabase = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    const supabase = createClient(supabaseUrl, SUPABASE_ANON_KEY)
     const { data: { user } } = await supabase.auth.getUser(token)
     
     if (!user) {

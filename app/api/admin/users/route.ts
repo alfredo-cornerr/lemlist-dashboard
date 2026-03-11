@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY } from "@/lib/supabase-config"
 
 // Helper to verify user from token and check admin status
 async function verifyAdmin(request: NextRequest) {
@@ -14,7 +11,7 @@ async function verifyAdmin(request: NextRequest) {
   }
   
   const token = authHeader.substring(7)
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   const { data: { user }, error } = await supabase.auth.getUser(token)
   
   if (error || !user) {
@@ -22,7 +19,7 @@ async function verifyAdmin(request: NextRequest) {
   }
 
   // Check admin status
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("is_admin")
@@ -44,7 +41,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
     const { data, error } = await supabaseAdmin
       .from("admin_users_view")
@@ -76,7 +73,7 @@ export async function PATCH(request: NextRequest) {
 
     const { userId, isAdmin: makeAdmin } = await request.json()
     
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({ is_admin: makeAdmin, updated_at: new Date().toISOString() })
@@ -107,7 +104,7 @@ export async function DELETE(request: NextRequest) {
 
     const { userId } = await request.json()
     
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (error) {
