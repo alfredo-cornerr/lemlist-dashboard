@@ -25,3 +25,4 @@ export async function getAuthHeaders() {
     Authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
   }
 }
+// Build timestamp: Wed Mar 11 23:58:55 CET 2026
