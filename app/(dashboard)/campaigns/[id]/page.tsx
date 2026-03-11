@@ -367,8 +367,8 @@ export default function CampaignDetailPage() {
                             {new Date(lead.lastActivityAt).toLocaleDateString()}
                           </div>
                         )}
-                        <Badge className={getLeadStatusColor(lead.status)}>
-                          {lead.status}
+                        <Badge className={getLeadStatusColor(lead.status || 'unknown')}>
+                          {lead.status || 'unknown'}
                         </Badge>
                       </div>
                     </div>

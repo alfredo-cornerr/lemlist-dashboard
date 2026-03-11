@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/supabase-server"
 import { Navigation } from "@/components/navigation"
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({
   children,
 }: {

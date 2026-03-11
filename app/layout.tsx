@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   description: "View your Lemlist campaign data and analytics",
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function RootLayout({
   children,
 }: {

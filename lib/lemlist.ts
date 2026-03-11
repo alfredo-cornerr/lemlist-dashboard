@@ -20,10 +20,12 @@ export const CampaignStatsSchema = z.object({
 
 export const LeadSchema = z.object({
   _id: z.string(),
-  email: z.string(),
+  email: z.string().optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  status: z.string(),
+  status: z.string().optional(),  // Mapped from 'state' field
+  state: z.string().optional(),   // Raw state from API
+  contactId: z.string().optional(),
   lastActivityAt: z.string().optional(),
 })
 
@@ -137,30 +139,170 @@ export class LemlistClient {
     }
   }
 
-  // Get campaign stats
+  // Get campaign stats - calculated from leads since /stats endpoint returns error
   async getCampaignStats(campaignId: string): Promise<CampaignStats> {
-    const data = await this.fetch<any>(`/campaigns/${campaignId}/stats`)
-    return {
-      sent: data.sent || 0,
-      opened: data.opened || 0,
-      clicked: data.clicked || 0,
-      replied: data.replied || 0,
-      bounced: data.bounced || 0,
-      unsubscribed: data.unsubscribed || 0,
+    try {
+      // Try the stats endpoint first
+      const data = await this.fetch<any>(`/campaigns/${campaignId}/stats`)
+      return {
+        sent: data.sent || 0,
+        opened: data.opened || 0,
+        clicked: data.clicked || 0,
+        replied: data.replied || 0,
+        bounced: data.bounced || 0,
+        unsubscribed: data.unsubscribed || 0,
+      }
+    } catch {
+      // If stats endpoint fails, calculate from leads
+      const leads = await this.getCampaignLeads(campaignId)
+      
+      const stats = {
+        sent: 0,
+        opened: 0,
+        clicked: 0,
+        replied: 0,
+        bounced: 0,
+        unsubscribed: 0,
+      }
+      
+      for (const lead of leads) {
+        const state = lead.status || lead.state || ''
+        
+        // Count based on lead state
+        if (state.includes('sent') || state === 'emailsSent') {
+          stats.sent++
+        }
+        if (state.includes('opened') || state === 'emailsOpened') {
+          stats.opened++
+        }
+        if (state.includes('clicked') || state === 'emailsClicked') {
+          stats.clicked++
+        }
+        if (state.includes('replied') || state === 'emailsReplied' || state === 'linkedinReplied') {
+          stats.replied++
+        }
+        if (state.includes('bounced') || state === 'emailsBounced') {
+          stats.bounced++
+        }
+        if (state.includes('unsubscribed') || state === 'variableUnsubscribed') {
+          stats.unsubscribed++
+        }
+      }
+      
+      // If no leads counted as sent, count all non-scanned leads
+      if (stats.sent === 0 && leads.length > 0) {
+        stats.sent = leads.filter(l => {
+          const state = l.status || l.state || ''
+          return state !== 'scanned' && state !== 'toScan'
+        }).length
+      }
+      
+      return stats
     }
   }
 
-  // Get campaign leads
+  // Get campaign leads (with pagination to get ALL leads - up to 50,000)
   async getCampaignLeads(campaignId: string): Promise<Lead[]> {
-    const data = await this.fetch<any[]>(`/campaigns/${campaignId}/leads`)
-    return data.map((lead) => ({
+    const allLeads: any[] = []
+    let offset = 0
+    const limit = 100
+    
+    // Keep fetching until we get fewer than limit results
+    while (true) {
+      try {
+        const data = await this.fetch<any[]>(`/campaigns/${campaignId}/leads?offset=${offset}&limit=${limit}`)
+        
+        if (data.length === 0) {
+          break
+        }
+        
+        allLeads.push(...data)
+        
+        // If we got fewer than limit, we've reached the end
+        if (data.length < limit) {
+          break
+        }
+        
+        offset += limit
+        
+        // Safety limit - don't fetch more than 50,000 leads (500 API calls max)
+        if (offset > 50000) {
+          console.warn(`Campaign ${campaignId} has more than 50,000 leads, truncating`)
+          break
+        }
+        
+        // Add delay every 10 requests to avoid rate limits (20 req/min limit)
+        if (offset % 1000 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 3000))
+        }
+      } catch (error) {
+        // If rate limited, wait and retry
+        if (error instanceof LemlistAPIError && error.statusCode === 429) {
+          console.log(`Rate limited, waiting 3 seconds...`)
+          await new Promise(resolve => setTimeout(resolve, 3000))
+          continue // Retry same offset
+        }
+        throw error
+      }
+    }
+    
+    return allLeads.map((lead) => ({
       _id: lead._id,
       email: lead.email,
       firstName: lead.firstName,
       lastName: lead.lastName,
-      status: lead.status,
+      status: lead.state || lead.status,  // Map 'state' to 'status' for consistency
+      state: lead.state,
+      contactId: lead.contactId,
       lastActivityAt: lead.lastActivityAt,
     }))
+  }
+
+  // Get contact details by ID
+  async getContact(contactId: string): Promise<{ _id: string; email: string; fullName: string; firstName?: string; lastName?: string; linkedinUrl?: string } | null> {
+    try {
+      const data = await this.fetch<any>(`/contacts/${contactId}`)
+      return {
+        _id: data._id,
+        email: data.email,
+        fullName: data.fullName,
+        firstName: data.fields?.firstName,
+        lastName: data.fields?.lastName,
+        linkedinUrl: data.linkedinUrl,
+      }
+    } catch {
+      return null
+    }
+  }
+
+  // Get campaign leads enriched with contact data
+  async getCampaignLeadsEnriched(campaignId: string, limit: number = 50): Promise<Lead[]> {
+    const leads = await this.getCampaignLeads(campaignId)
+    const limitedLeads = leads.slice(0, limit)
+    
+    // Enrich with contact data (with delay to avoid rate limits)
+    const enrichedLeads: Lead[] = []
+    for (const lead of limitedLeads) {
+      if (lead.contactId) {
+        // Wait 50ms between requests to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 50))
+        const contact = await this.getContact(lead.contactId)
+        if (contact) {
+          enrichedLeads.push({
+            ...lead,
+            email: contact.email,
+            firstName: contact.firstName || contact.fullName?.split(' ')[0],
+            lastName: contact.lastName || contact.fullName?.split(' ').slice(1).join(' '),
+          })
+        } else {
+          enrichedLeads.push(lead)
+        }
+      } else {
+        enrichedLeads.push(lead)
+      }
+    }
+    
+    return enrichedLeads
   }
 
   // Get campaign sequence

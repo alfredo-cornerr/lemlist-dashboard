@@ -54,18 +54,18 @@ export async function GET(
 
     const client = new LemlistClient(profile.lemlist_api_key)
 
-    const [campaign, stats, leads, sequence] = await Promise.all([
+    // Fetch campaign and leads (basic data only - enrichment happens on demand)
+    const [campaign, stats, leads] = await Promise.all([
       client.getCampaign(campaignId),
-      client.getCampaignStats(campaignId),
-      client.getCampaignLeads(campaignId),
-      client.getCampaignSequence(campaignId),
+      client.getCampaignStats(campaignId).catch(() => ({ sent: 0, opened: 0, clicked: 0, replied: 0, bounced: 0, unsubscribed: 0 })),
+      client.getCampaignLeads(campaignId).catch(() => []),
     ])
 
     return NextResponse.json({
       campaign,
       stats,
       leads,
-      sequence,
+      sequence: [], // Sequence endpoint returns HTML error, skip it
     })
   } catch (error) {
     console.error("Error fetching campaign details:", error)
