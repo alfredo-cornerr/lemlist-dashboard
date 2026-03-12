@@ -1,4 +1,5 @@
 "use client"
+// v2 - auth proxy
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
