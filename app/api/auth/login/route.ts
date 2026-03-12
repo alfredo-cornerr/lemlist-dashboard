@@ -20,8 +20,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: data.msg || data.error || "Login failed" }, { status: res.status })
     }
     
-    return NextResponse.json({ user: data.user, session: data.session })
-  } catch (error) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 })
+    // Return session data
+    return NextResponse.json({ 
+      user: data.user, 
+      session: {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: data.expires_at
+      }
+    })
+  } catch (error: any) {
+    console.error("Login error:", error.message)
+    return NextResponse.json({ error: error.message || "Server error" }, { status: 500 })
   }
 }

@@ -32,18 +32,23 @@ export default function LoginPage() {
         localStorage.setItem('sb-access-token', session.access_token)
       }
 
-      // Log activity
+      // Log activity (with auth header)
       try {
+        const token = localStorage.getItem('access_token')
         await fetch("/api/activity", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({ action: "login", details: { email } }),
         })
       } catch {
         // Ignore activity logging errors
       }
 
-      router.push("/dashboard")
+      // Force redirect
+      window.location.href = "/dashboard"
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred during login")
