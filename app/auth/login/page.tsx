@@ -50,7 +50,14 @@ export default function LoginPage() {
         // Set cookie for middleware - SameSite=None required for cross-origin redirects
         const token = data.session.access_token
         document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=None; Secure`
-        console.log("Token saved, redirecting...")
+        console.log("Token saved, verifying profile...")
+        
+        // Verify and create profile if needed
+        await fetch("/api/auth/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        })
   
       }
       
