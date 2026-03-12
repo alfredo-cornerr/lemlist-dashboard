@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { supabaseBrowserClient } from "@/lib/supabase-client"
+import { signIn } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,13 +24,11 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error: signInError } = await supabaseBrowserClient.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) {
-        throw signInError
+      const { session } = await signIn(email, password)
+      
+      // Store session in localStorage for API calls
+      if (session?.access_token) {
+        localStorage.setItem('sb-access-token', session.access_token)
       }
 
       // Log activity

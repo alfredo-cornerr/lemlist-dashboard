@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { supabaseBrowserClient } from "@/lib/supabase-client"
+import { signUp } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,15 +38,7 @@ export default function SignupPage() {
     }
 
     try {
-      const { error: signUpError } = await supabaseBrowserClient.auth.signUp({
-        email,
-        password,
-      })
-
-      if (signUpError) {
-        throw signUpError
-      }
-
+      await signUp(email, password)
       setIsSuccess(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred during signup")
