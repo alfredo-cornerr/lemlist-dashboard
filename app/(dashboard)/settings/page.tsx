@@ -18,7 +18,7 @@ import {
   EyeOff
 } from "lucide-react"
 import { toast } from "sonner"
-import { supabaseBrowserClient } from "@/lib/supabase-client"
+import { getToken } from "@/lib/auth-client"
 import {
   Dialog,
   DialogContent,
@@ -44,11 +44,11 @@ export default function SettingsPage() {
     // Check if user has an existing API key
     const checkExistingKey = async () => {
       try {
-        const { data: { session } } = await supabaseBrowserClient.auth.getSession()
+        const token = getToken()
         
         const response = await fetch("/api/user/api-key", {
           headers: {
-            Authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
+            Authorization: token ? `Bearer ${token}` : '',
           },
         })
         
@@ -104,13 +104,13 @@ export default function SettingsPage() {
     setErrorMessage(null)
 
     try {
-      const { data: { session } } = await supabaseBrowserClient.auth.getSession()
+      const token = getToken()
       
       const response = await fetch("/api/user/api-key", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          Authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
+          Authorization: token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({ apiKey }),
       })
@@ -135,12 +135,12 @@ export default function SettingsPage() {
     setIsRevoking(true)
 
     try {
-      const { data: { session } } = await supabaseBrowserClient.auth.getSession()
+      const token = getToken()
       
       const response = await fetch("/api/user/api-key", {
         method: "DELETE",
         headers: {
-          Authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
+          Authorization: token ? `Bearer ${token}` : '',
         },
       })
 
