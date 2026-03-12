@@ -44,18 +44,30 @@ const adminClient = createSupabaseServerClient(supabaseUrl, supabaseServiceKey, 
 
 export const supabaseAdmin = adminClient
 
-// Get current user from server
+// Get current user from server - using access_token cookie
 export async function getCurrentUser() {
   try {
-    const supabase = await createSupabaseServer()
-    const { data: { user }, error } = await supabase.auth.getUser()
+    const cookieStore = await cookies()
+    const token = cookieStore.get("access_token")?.value
     
-    if (error) {
-      console.error("getUser error:", error)
+    if (!token) {
       return null
     }
     
-    return user
+    // Verify token with Supabase
+    const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!res.ok) {
+      return null
+    }
+    
+    const data = await res.json()
+    return data
   } catch (error) {
     console.error("Error in getCurrentUser:", error)
     return null
