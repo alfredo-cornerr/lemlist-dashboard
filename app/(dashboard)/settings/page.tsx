@@ -56,10 +56,15 @@ export default function SettingsPage() {
           const data = await response.json()
           if (data.hasKey) {
             setHasExistingKey(true)
+            if (data.apiKey) {
+              setApiKey(data.apiKey) // Show existing key
+            }
           }
+        } else {
+          console.error("Failed to check API key:", await response.text())
         }
-      } catch {
-        // Ignore error
+      } catch (err) {
+        console.error("Error checking existing key:", err)
       }
     }
     checkExistingKey()

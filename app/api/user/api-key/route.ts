@@ -44,7 +44,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to check API key" }, { status: 500 })
     }
 
-    return NextResponse.json({ hasKey: !!data?.lemlist_api_key })
+    return NextResponse.json({ 
+      hasKey: !!data?.lemlist_api_key,
+      apiKey: data?.lemlist_api_key || null
+    })
   } catch (error) {
     console.error("Error checking API key:", error)
     return NextResponse.json({ error: "Failed to check API key" }, { status: 500 })
