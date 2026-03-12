@@ -128,7 +128,27 @@ export default function SettingsPage() {
       setHasExistingKey(true)
       setApiKey("")
       setTestStatus("idle")
-      toast.success("API key saved successfully!")
+      toast.success("API key saved! Starting sync...")
+      
+      // Trigger automatic sync
+      setTimeout(async () => {
+        try {
+          const syncRes = await fetch("/api/sync-new", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : '',
+            },
+          })
+          
+          if (syncRes.ok) {
+            const data = await syncRes.json()
+            toast.success(`Sync started! ${data.campaigns} campaigns found.`)
+          }
+        } catch (e) {
+          // Ignore sync errors
+        }
+      }, 1000)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Failed to save API key")
     } finally {

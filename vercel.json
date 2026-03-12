@@ -1,11 +1,8 @@
 {
-  "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://iryspbctmpabowxatvsy.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyeXNwYmN0bXBhYm93eGF0dnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNDQ2OTksImV4cCI6MjA4NTgyMDY5OX0.iyLcfy43oNvuS6YtZiVjj98gG00nZYF18_JVcHgkiWI",
-    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyeXNwYmN0bXBhYm93eGF0dnN5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDI0NDY5OSwiZXhwIjoyMDg1ODIwNjk5fQ.Abw_oS9ANe1jAERQaF3Z0JSG16NGv9yOzGVNAb_zw1s"
-  }
+  "crons": [
+    {
+      "path": "/api/cron/sync",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
