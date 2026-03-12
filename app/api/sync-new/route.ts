@@ -113,10 +113,12 @@ export async function POST(request: NextRequest) {
             }),
           })
           
-          if (lead.sent) sent++
-          if (lead.opened) opened++
-          if (lead.replied) replied++
-          if (lead.clicked) clicked++
+          // Count stats from lead state
+          const leadAny = lead as any
+          if (leadAny.sent) sent++
+          if (leadAny.opened) opened++
+          if (leadAny.replied) replied++
+          if (leadAny.clicked) clicked++
         }
         
         // Save stats
