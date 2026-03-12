@@ -20,13 +20,13 @@ export default function LoginPage() {
     setIsLoading(true)
     setError(null)
     
-    alert("Login started...") // DEBUG
+
 
     try {
       console.log("Login attempt:", email)
-      alert("Email: " + email) // DEBUG
+  
       
-      alert("Fetching...") // DEBUG
+
       
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -34,7 +34,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
       
-      alert("Response received: " + res.status) // DEBUG
+
       console.log("Login response status:", res.status)
       
       const data = await res.json()
@@ -51,11 +51,10 @@ export default function LoginPage() {
         const token = data.session.access_token
         document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=None; Secure`
         console.log("Token saved, redirecting...")
-        alert("Cookie set, redirecting now...") // DEBUG
+  
       }
       
       // Redirect to dashboard
-      alert("Redirecting to dashboard...") // DEBUG
       window.location.href = "/dashboard"
       
     } catch (err) {
