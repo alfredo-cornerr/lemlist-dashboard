@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
     
     let totalLeads = 0
     
-    // Process each campaign
-    for (const campaign of campaigns.slice(0, 50)) {
+    // Process each campaign (limit to 20 to avoid timeout)
+    for (const campaign of campaigns.slice(0, 20)) {
       const campaignId = campaign._id
       
       // Save campaign
@@ -87,8 +87,9 @@ export async function POST(request: NextRequest) {
       })
       
       try {
-        // Fetch leads
-        const leads = await client.getCampaignLeads(campaignId)
+        // Fetch leads - only first 100 (one page) to avoid timeout
+        const leadsRes = await fetch(`https://api.lemlist.com/api/campaigns/${campaignId}/leads?limit=100&access_token=${apiKey}`)
+        const leads = leadsRes.ok ? await leadsRes.json() : []
         totalLeads += leads.length
         
         let sent = 0, opened = 0, replied = 0, clicked = 0
