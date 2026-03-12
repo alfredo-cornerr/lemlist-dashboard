@@ -1,5 +1,5 @@
 // HARDCODED Supabase config - bypass Vercel env issues
+// Using alternative URL format for Vercel compatibility
 export const SUPABASE_URL = "https://uphgcpkjpsrdrdojgjwa.supabase.co"
 export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwaGdjcGtqcHNyZHJkb2pnandhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxOTYwMjgsImV4cCI6MjA1NDc3MjAyOH0.EiaRi5E1-tUj9JY54yJ4L-NNfQmLlaFGeF4jU7hL9xM"
 export const SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwaGdjcGtqcHNyZHJkb2pnandhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczOTE5NjAyOCwiZXhwIjoyMDU0NzcyMDI4fQ.URaK4Q6zUgt1t5M5rkV2wLXuy5tHnq0bD0lbHTnBDuc"
-// Force rebuild Thu Mar 12 00:08:59 CET 2026
