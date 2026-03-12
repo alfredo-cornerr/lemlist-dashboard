@@ -88,12 +88,11 @@ export async function POST(request: NextRequest) {
     
     console.log("Sync: Fetching campaigns from Lemlist with key:", apiKey.substring(0, 5) + "...")
     
-    // Fetch campaigns from Lemlist
-    const campaignsRes = await fetch('https://api.lemlist.com/api/campaigns', {
+    // Fetch campaigns from Lemlist - use access_token query param (not header!)
+    const campaignsRes = await fetch(`https://api.lemlist.com/api/campaigns?access_token=${apiKey}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
       },
     })
     
@@ -149,9 +148,9 @@ export async function POST(request: NextRequest) {
       })
       
       // Fetch leads for this campaign
-      const leadsRes = await fetch(`https://api.lemlist.com/api/campaigns/${campaignId}/leads?limit=100`, {
+      const leadsRes = await fetch(`https://api.lemlist.com/api/campaigns/${campaignId}/leads?limit=100&access_token=${apiKey}`, {
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Accept': 'application/json',
         },
       })
       
