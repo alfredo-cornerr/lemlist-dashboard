@@ -19,9 +19,14 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    
+    alert("Login started...") // DEBUG
 
     try {
       console.log("Login attempt:", email)
+      alert("Email: " + email) // DEBUG
+      
+      alert("Fetching...") // DEBUG
       
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -29,6 +34,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
       
+      alert("Response received: " + res.status) // DEBUG
       console.log("Login response status:", res.status)
       
       const data = await res.json()
@@ -45,6 +51,7 @@ export default function LoginPage() {
       }
       
       // Redirect to dashboard
+      alert("Redirecting to dashboard...") // DEBUG
       window.location.href = "/dashboard"
       
     } catch (err) {
