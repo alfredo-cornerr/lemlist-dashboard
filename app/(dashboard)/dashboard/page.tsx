@@ -12,7 +12,7 @@ import {
   Send, Activity, Clock, TrendingUp, Users, Settings,
   X, BarChart3, PieChart as PieChartIcon
 } from "lucide-react"
-import { supabaseBrowserClient } from "@/lib/supabase-client"
+import { getToken } from "@/lib/auth-client"
 import { toast } from "sonner"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 
@@ -52,19 +52,20 @@ export default function DashboardPage() {
   const [lastSynced, setLastSynced] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([])
+  const [isSyncing, setIsSyncing] = useState(false)
 
   const fetchCampaigns = async () => {
     try {
       setIsLoading(true)
-      const { data: { session } } = await supabaseBrowserClient.auth.getSession()
+      const token = getToken()
       
-      if (!session) {
+      if (!token) {
         setIsLoading(false)
         return
       }
       
       const response = await fetch("/api/cached/campaigns", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
       
       const data = await response.json()
@@ -91,6 +92,46 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchCampaigns()
   }, [])
+
+  // Sync data from Lemlist
+  const syncNow = async () => {
+    try {
+      setIsSyncing(true)
+      const token = getToken()
+      
+      if (!token) {
+        toast.error("Not authenticated")
+        return
+      }
+      
+      toast.info("Syncing data from Lemlist... This may take a minute.")
+      
+      const response = await fetch("/api/sync", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Sync failed")
+      }
+      
+      toast.success(`Sync complete! ${data.campaigns} campaigns, ${data.leads} leads synced.`)
+      
+      // Refresh campaigns
+      await fetchCampaigns()
+      
+    } catch (err) {
+      console.error("Sync error:", err)
+      toast.error(err instanceof Error ? err.message : "Sync failed")
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   // Filter by user selection
   const filteredCampaigns = useMemo(() => {
@@ -178,10 +219,26 @@ export default function DashboardPage() {
             )}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchCampaigns}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={syncNow}
+            disabled={isSyncing}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            {isSyncing ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            {isSyncing ? "Syncing..." : "Sync Now"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={fetchCampaigns}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Settings Panel */}
