@@ -79,13 +79,12 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 CREATE OR REPLACE FUNCTION get_latest_campaign_stats(p_user_id UUID)
 RETURNS TABLE (
   campaign_id TEXT,
-  name TEXT,
-  status TEXT,
-  sent INTEGER,
-  opened INTEGER,
-  replied INTEGER,
-  clicked INTEGER,
-  leads INTEGER,
+  campaign_name TEXT,
+  campaign_status TEXT,
+  total_leads INTEGER,
+  emails_sent INTEGER,
+  emails_opened INTEGER,
+  emails_replied INTEGER,
   open_rate NUMERIC,
   reply_rate NUMERIC
 ) AS $$
@@ -93,13 +92,12 @@ BEGIN
   RETURN QUERY
   SELECT 
     c.campaign_id,
-    c.name,
-    c.status,
-    COALESCE(s.sent, 0) as sent,
-    COALESCE(s.opened, 0) as opened,
-    COALESCE(s.replied, 0) as replied,
-    COALESCE(s.clicked, 0) as clicked,
-    COALESCE(s.leads, 0) as leads,
+    c.name as campaign_name,
+    c.status as campaign_status,
+    COALESCE(s.leads, 0) as total_leads,
+    COALESCE(s.sent, 0) as emails_sent,
+    COALESCE(s.opened, 0) as emails_opened,
+    COALESCE(s.replied, 0) as emails_replied,
     COALESCE(s.open_rate, 0) as open_rate,
     COALESCE(s.reply_rate, 0) as reply_rate
   FROM lemlist_campaigns c
