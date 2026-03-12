@@ -11,7 +11,7 @@ import {
   RefreshCw, Mail, Eye, MessageCircle, 
   ArrowLeft, Search, Clock
 } from "lucide-react"
-import { supabaseBrowserClient } from "@/lib/supabase-client"
+import { getToken } from "@/lib/auth-client"
 
 interface CampaignWithStats {
   campaign_id: string
@@ -36,16 +36,16 @@ export default function CampaignsPage() {
   const fetchCampaigns = async () => {
     try {
       setIsLoading(true)
-      const { data: { session } } = await supabaseBrowserClient.auth.getSession()
+      const token = getToken()
       
-      if (!session) {
+      if (!token) {
         setIsLoading(false)
         return
       }
       
       // Use cached API
       const response = await fetch("/api/cached/campaigns", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
       
       const data = await response.json()
