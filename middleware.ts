@@ -6,6 +6,8 @@ export async function middleware(request: NextRequest) {
   
   let user = null
   
+  console.log("Middleware checking token:", token ? "present" : "missing")
+  
   if (token) {
     try {
       // Verify token with Supabase
@@ -16,9 +18,14 @@ export async function middleware(request: NextRequest) {
         },
       })
       
+      console.log("Token verification:", res.status)
+      
       if (res.ok) {
         const data = await res.json()
         user = data
+        console.log("User authenticated:", user.id)
+      } else {
+        console.log("Token invalid")
       }
     } catch (e) {
       console.error("Token verification failed:", e)

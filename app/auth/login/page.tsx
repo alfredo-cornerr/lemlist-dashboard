@@ -47,9 +47,11 @@ export default function LoginPage() {
       // Save token in localStorage and cookie
       if (data.session?.access_token) {
         localStorage.setItem("access_token", data.session.access_token)
-        // Set cookie for middleware
-        document.cookie = `access_token=${data.session.access_token}; path=/; max-age=86400`
+        // Set cookie for middleware - must use domain=.vercel.app for subdomains
+        const token = data.session.access_token
+        document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax`
         console.log("Token saved, redirecting...")
+        alert("Cookie set, redirecting now...") // DEBUG
       }
       
       // Redirect to dashboard
