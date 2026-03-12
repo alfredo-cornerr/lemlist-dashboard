@@ -44,9 +44,11 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed")
       }
       
-      // Save token
+      // Save token in localStorage and cookie
       if (data.session?.access_token) {
         localStorage.setItem("access_token", data.session.access_token)
+        // Set cookie for middleware
+        document.cookie = `access_token=${data.session.access_token}; path=/; max-age=86400`
         console.log("Token saved, redirecting...")
       }
       
