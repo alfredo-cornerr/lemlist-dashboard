@@ -56,13 +56,17 @@ export async function POST(request: NextRequest) {
     console.log("Sync: Profile response", profileRes.status)
     
     const profiles = await profileRes.json()
+    console.log("Sync: Profile data", JSON.stringify(profiles))
+    
     const apiKey = profiles[0]?.lemlist_api_key
     
-    console.log("Sync: API key found", !!apiKey)
+    console.log("Sync: API key found", !!apiKey, "length:", apiKey?.length)
     
     if (!apiKey) {
       return NextResponse.json({ error: "No API key found" }, { status: 400 })
     }
+    
+    console.log("Sync: Using API key starting with:", apiKey.substring(0, 10) + "...")
     
     // Create sync log
     const syncLogRes = await fetch(`${supabaseUrl}/rest/v1/lemlist_sync_log`, {
@@ -82,11 +86,13 @@ export async function POST(request: NextRequest) {
     const syncLog = await syncLogRes.json()
     const syncId = syncLog[0]?.id
     
-    console.log("Sync: Fetching campaigns from Lemlist")
+    console.log("Sync: Fetching campaigns from Lemlist with key:", apiKey.substring(0, 5) + "...")
     
     // Fetch campaigns from Lemlist
     const campaignsRes = await fetch('https://api.lemlist.com/api/campaigns', {
+      method: 'GET',
       headers: {
+        'Accept': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
     })
