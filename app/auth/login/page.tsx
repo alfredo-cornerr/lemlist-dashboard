@@ -1,10 +1,7 @@
 "use client"
-// v2 - auth proxy
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { signIn } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +10,6 @@ import { AlertCircle, Loader2, Mail } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function LoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -25,33 +21,35 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { session } = await signIn(email, password)
+      console.log("Login attempt:", email)
       
-      // Store session in localStorage for API calls
-      if (session?.access_token) {
-        localStorage.setItem('sb-access-token', session.access_token)
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+      
+      console.log("Login response status:", res.status)
+      
+      const data = await res.json()
+      console.log("Login response:", data)
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed")
       }
-
-      // Log activity (with auth header)
-      try {
-        const token = localStorage.getItem('access_token')
-        await fetch("/api/activity", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ action: "login", details: { email } }),
-        })
-      } catch {
-        // Ignore activity logging errors
+      
+      // Save token
+      if (data.session?.access_token) {
+        localStorage.setItem("access_token", data.session.access_token)
+        console.log("Token saved, redirecting...")
       }
-
-      // Force redirect
+      
+      // Redirect to dashboard
       window.location.href = "/dashboard"
-      router.refresh()
+      
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred during login")
+      console.error("Login error:", err)
+      setError(err instanceof Error ? err.message : "Login failed")
     } finally {
       setIsLoading(false)
     }
