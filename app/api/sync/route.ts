@@ -34,11 +34,16 @@ async function verifyUser(request: NextRequest) {
 // POST - Trigger sync
 export async function POST(request: NextRequest) {
   try {
+    console.log("Sync started")
+    
     const user = await verifyUser(request)
     
     if (!user) {
+      console.log("Sync: Unauthorized")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    
+    console.log("Sync: User verified", user.id)
     
     // Get user's API key
     const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?select=lemlist_api_key&id=eq.${user.id}`, {
@@ -48,8 +53,12 @@ export async function POST(request: NextRequest) {
       },
     })
     
+    console.log("Sync: Profile response", profileRes.status)
+    
     const profiles = await profileRes.json()
     const apiKey = profiles[0]?.lemlist_api_key
+    
+    console.log("Sync: API key found", !!apiKey)
     
     if (!apiKey) {
       return NextResponse.json({ error: "No API key found" }, { status: 400 })
@@ -73,6 +82,8 @@ export async function POST(request: NextRequest) {
     const syncLog = await syncLogRes.json()
     const syncId = syncLog[0]?.id
     
+    console.log("Sync: Fetching campaigns from Lemlist")
+    
     // Fetch campaigns from Lemlist
     const campaignsRes = await fetch('https://api.lemlist.com/api/campaigns', {
       headers: {
@@ -80,7 +91,12 @@ export async function POST(request: NextRequest) {
       },
     })
     
+    console.log("Sync: Lemlist response", campaignsRes.status)
+    
     if (!campaignsRes.ok) {
+      const errorText = await campaignsRes.text()
+      console.error("Sync: Lemlist error", errorText)
+      
       // Update sync log to error
       await fetch(`${supabaseUrl}/rest/v1/lemlist_sync_log?id=eq.${syncId}`, {
         method: 'PATCH',
@@ -91,7 +107,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           status: 'error',
-          error: 'Failed to fetch campaigns from Lemlist',
+          error: 'Failed to fetch campaigns from Lemlist: ' + errorText,
           completed_at: new Date().toISOString(),
         }),
       })
@@ -100,6 +116,7 @@ export async function POST(request: NextRequest) {
     }
     
     const campaigns = await campaignsRes.json()
+    console.log("Sync: Found", campaigns.length, "campaigns")
     let totalLeads = 0
     
     // Process each campaign
@@ -218,7 +235,7 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error: any) {
-    console.error("Sync error:", error)
+    console.error("Sync error:", error.message, error.stack)
     return NextResponse.json({ error: error.message || "Sync failed" }, { status: 500 })
   }
 }
