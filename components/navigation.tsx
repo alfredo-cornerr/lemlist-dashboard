@@ -18,7 +18,7 @@ import {
   Shield,
 } from "lucide-react"
 import { useState, useEffect } from "react"
-import { supabaseBrowserClient } from "@/lib/supabase-client"
+import { logout, getToken } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
 
 const navItems = [
@@ -37,20 +37,24 @@ export function Navigation() {
     // Check if user is admin
     const checkAdmin = async () => {
       try {
-        const { data: { session } } = await supabaseBrowserClient.auth.getSession()
+        const token = getToken()
         
-        if (!session) {
+        if (!token) {
           setIsAdmin(false)
           return
         }
         
-        const { data: profile } = await supabaseBrowserClient
-          .from("profiles")
-          .select("is_admin")
-          .eq("id", session.user.id)
-          .single()
-          
-        setIsAdmin(profile?.is_admin || false)
+        const response = await fetch("/api/user/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        
+        if (!response.ok) {
+          setIsAdmin(false)
+          return
+        }
+        
+        const data = await response.json()
+        setIsAdmin(data.is_admin || false)
       } catch {
         setIsAdmin(false)
       }
@@ -59,9 +63,9 @@ export function Navigation() {
   }, [])
 
   const handleLogout = async () => {
-    await supabaseBrowserClient.auth.signOut()
-    router.push("/auth/login")
-    router.refresh()
+    logout() // Clear localStorage
+    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    window.location.href = "/auth/login"
   }
 
   return (

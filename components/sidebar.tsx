@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, Mail, Settings, LogOut, BarChart3 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { supabaseBrowserClient } from "@/lib/supabase-client"
+import { logout } from "@/lib/auth-client"
 import { useRouter } from "next/navigation"
 
 const navigation = [
@@ -19,9 +19,11 @@ export function Sidebar() {
   const router = useRouter()
 
   const handleLogout = async () => {
-    await supabaseBrowserClient.auth.signOut()
+    logout() // Clear localStorage
+    // Clear cookie
+    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
     router.push("/auth/login")
-    router.refresh()
+    window.location.href = "/auth/login" // Force reload
   }
 
   return (
