@@ -245,3 +245,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message || "Sync failed" }, { status: 500 })
   }
 }
+// Force rebuild Thu Mar 12 17:16:45 CET 2026
