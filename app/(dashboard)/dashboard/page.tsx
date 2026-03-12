@@ -106,7 +106,7 @@ export default function DashboardPage() {
       
       toast.info("Syncing data from Lemlist... This may take a minute.")
       
-      const response = await fetch("/api/sync", {
+      const response = await fetch("/api/sync-new", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
